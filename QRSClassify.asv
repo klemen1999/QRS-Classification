@@ -1,0 +1,57 @@
+function [classifications] = QRSClassify(record, beats, Fs)
+    signalFileName = sprintf("%sm.mat", record);
+    S = load(signalFileName);
+    sig = S.val(1,:);
+    Fc = 2;
+    fsig = HPFilter(sig, Fc, 1/Fs);
+
+    averageBeat =  getAverageBeat(fsig ,beats, Fs);
+    plot(averageBeat);
+    limLower = round(Fs*0.06);
+    limUpper = round(Fs*0.1);
+
+    classifications = [];
+    for i = 1:length(beats)
+        Fp = beats(i,1);
+        if Fp+limUpper <= length(fsig)
+            currBeat = fsig(Fp-limLower:Fp+limUpper);
+            currBeat = currBeat(1:length(averageBeat));
+            currBeat = currBeat / max(currBeat); % this is questionable
+            currLabel = classifyBeat(currBeat, averageBeat);
+            classifications = [classifications, currLabel];
+        else
+            currBeat = fsig(Fp-limLower:end);
+            tempAverageBeat = averageBeat(1:length(currBeat));
+            currBeat = currBeat / max(currBeat); % this is questionable
+            currLabel = classifyBeat(currBeat, tempAverageBeat);
+            classifications = [classifications, currLabel];
+        end
+    end
+end
+
+function [averageBeat] = getAverageBeat(sig, beats, Fs)
+    %filename = sprintf("%s-avg.txt", record);
+    %val = dlmread(filename);
+    %averageBeat = val(:,2);
+    maxSample = Fs*300;
+    fpPointsAll = beats(:,1);
+    indicies = fpPointsAll(fpPointsAll<=maxSample);
+    averageBeat = zeros(1,Fs*160);
+    limLower = round(Fs*0.06);
+    limUpper = round(Fs*0.1);
+    for i=1:length(indices)
+        currBeat = sig(Fp-limLower:Fp+limUpper);
+        averageBeat = averageBeat + currBeat;
+    end
+    averageBeat = averageBeat ./ length(inidices);
+end
+
+function [class] = classifyBeat(currBeat, averageBeat)
+    N = length(averageBeat);
+    d1 = (1/N) * sum(abs(currBeat-averageBeat));
+    if d1 >= 0.2
+        class = 0;
+    else
+        class = 1;
+    end
+end
