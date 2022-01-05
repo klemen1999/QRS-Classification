@@ -10,8 +10,8 @@ function [classifications] = QRSClassify(record, beats, Fs)
         classifications = NaN;
         return
     end
-    threshold = (1/length(averageBeat)) * sum(abs(averageBeat-(averageBeat*0.4)));
-    
+    threshold = (1/length(averageBeat)) * sum(abs(averageBeat-(averageBeat*0.2)));
+
     limLower = floor(Fs*0.06);
     limUpper = round(Fs*0.1);
     fpPoints = beats(:,1);
