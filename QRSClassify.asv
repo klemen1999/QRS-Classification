@@ -6,52 +6,53 @@ function [classifications] = QRSClassify(record, beats, Fs)
     fsig = HPFilter(sig, Fc, 1/Fs);
 
     averageBeat =  getAverageBeat(fsig ,beats, Fs);
-    plot(averageBeat);
-    limLower = round(Fs*0.06);
-    limUpper = round(Fs*0.1);
+    threshold = (1/N) * sum(abs(averageBeat-(averageBeat*0.8)));
 
+
+    limLower = floor(Fs*0.06);
+    limUpper = round(Fs*0.1);
+    fpPoints = beats(:,1);
     classifications = [];
-    for i = 1:length(beats)
-        Fp = beats(i,1);
-        if Fp+limUpper <= length(fsig)
-            currBeat = fsig(Fp-limLower:Fp+limUpper);
-            currBeat = currBeat(1:length(averageBeat));
-            currBeat = currBeat / max(currBeat); % this is questionable
-            currLabel = classifyBeat(currBeat, averageBeat);
+    for i = 1:length(fpPoints)
+        currFp = fpPoints(i);
+        if currFp+limUpper <= length(fsig)
+            currBeat = fsig(currFp-limLower:currFp+limUpper);
+            [currLabel, threshold] = classifyBeat(currBeat, averageBeat, threshold);
             classifications = [classifications, currLabel];
         else
-            currBeat = fsig(Fp-limLower:end);
+            currBeat = fsig(currFp-limLower:end);
             tempAverageBeat = averageBeat(1:length(currBeat));
-            currBeat = currBeat / max(currBeat); % this is questionable
             currLabel = classifyBeat(currBeat, tempAverageBeat);
             classifications = [classifications, currLabel];
         end
+        break
     end
 end
 
 function [averageBeat] = getAverageBeat(sig, beats, Fs)
-    %filename = sprintf("%s-avg.txt", record);
-    %val = dlmread(filename);
-    %averageBeat = val(:,2);
     maxSample = Fs*300;
     fpPointsAll = beats(:,1);
-    indicies = fpPointsAll(fpPointsAll<=maxSample);
-    averageBeat = zeros(1,Fs*160);
-    limLower = round(Fs*0.06);
+    fpPoints = fpPointsAll(fpPointsAll<=maxSample);
+    averageBeat = zeros(1,round(Fs*0.16));
+    limLower = floor(Fs*0.06);
     limUpper = round(Fs*0.1);
-    for i=1:length(indices)
-        currBeat = sig(Fp-limLower:Fp+limUpper);
+    for i=1:length(fpPoints)
+        currFp = fpPoints(i);
+        currBeat = sig(currFp-limLower:currFp+limUpper);
         averageBeat = averageBeat + currBeat;
     end
-    averageBeat = averageBeat ./ length(inidices);
+    averageBeat = averageBeat ./ length(fpPoints);
 end
 
-function [class] = classifyBeat(currBeat, averageBeat)
+function [class, newThreshold] = classifyBeat(currBeat, averageBeat, threshold)
     N = length(averageBeat);
     d1 = (1/N) * sum(abs(currBeat-averageBeat));
-    if d1 >= 0.2
-        class = 0;
+    newThreshold = threshold;
+    %d2 = sqrt((1/N)*sum(abs(currBeat-averageBeat)).^2);
+    %dInf = max(abs(currBeat-averageBeat));
+    if d1 > threshold
+        class = 1; % V
     else
-        class = 1;
+        class = 0; % N
     end
 end
