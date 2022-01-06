@@ -5,10 +5,11 @@ function Classifier(record)
     [beats, count] = readannotationsMITBIH(annotationsFileName);
 
     Fs = 360; % 250 for LTST, 360 for MIT-BIH
-    classifications = QRSClassify(record, beats, Fs);
-
+    %classifications = QRSClassify(record, beats, Fs);
+    classifications = QRSCluster(record, beats, Fs);
+    %{
     fprintf('Running time: %f\n', cputime() - t);
-    
+
     if isnan(classifications)
         fprintf("Skip this record %s\n", record);
     end
@@ -17,7 +18,9 @@ function Classifier(record)
     fid = fopen(asciName, 'wt');
     for i=1:size(beats,1)
         if isnan(classifications)
-            fprintf(fid,'0:00:00.00 %d V 0 0 0\n', beats(i,1)); % don't use this record for comparison
+            % don't use this record for comparison because no normal beat
+            % in learning process
+            fprintf(fid,'0:00:00.00 %d X 0 0 0\n', beats(i,1)); 
         elseif classifications(i) == 0
             fprintf(fid,'0:00:00.00 %d N 0 0 0\n', beats(i,1));
         else
@@ -25,5 +28,6 @@ function Classifier(record)
         end
     end
     fclose(fid);
+    %}
 end
 
