@@ -6,8 +6,7 @@ function Classifier(record)
 
     Fs = 360; % 250 for LTST, 360 for MIT-BIH
     % classificatior using 1. strategy for initial threshold
-    % classifications = QRSClassify1(record, beats, Fs);
-    % classificatior using 2. strategy for initial threshold
+    %classifications = QRSClassify1(record, beats, Fs);
     classifications = QRSClassify2(record, beats, Fs);
     
     fprintf('Running time: %f\n', cputime() - t);
